@@ -32,31 +32,62 @@ def index():
 @app.route("/register", methods=['GET','POST'])
 def register():
     if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-        
+        name = request.form['name'].strip()
+        email = request.form['email'].strip()
+        password = request.form['password'].strip()
+
+        # 1️⃣ Name validation
+        if not name:
+            return render_template("register.html", error="Name is required!")
+
+        # 2️⃣ Email validation
+        if not email:
+            return render_template("register.html", error="Email is required!")
+
+        # 3️⃣ Password validation
+        if not password:
+            return render_template("register.html", error="Password is required!")
+
+        # 4️⃣ Password length validation
+        if len(password) < 6:
+            return render_template("register.html", error="Password must be at least 6 characters!")
+
+        # 5️⃣ Email uniqueness validation
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return render_template("register.html", error="Email already registered!")
+
+        # If all validations pass
         new_user = User(name=name, email=email, password=password)
         db.session.add(new_user)
         db.session.commit()
+
         return redirect('/login')
-    
+
     return render_template("register.html")
+
 
 @app.route("/login", methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        
+        email = request.form['email'].strip()
+        password = request.form['password'].strip()
+
+        # Empty field validation
+        if not email:
+            return render_template("login.html", error="Email is required!")
+
+        if not password:
+            return render_template("login.html", error="Password is required!")
+
         user = User.query.filter_by(email=email).first()
-        
+
         if user and user.check_password(password):
             session['email'] = user.email
             return redirect('/dashboard')
         else:
-            return render_template('login.html',error='Invalid Password')
-        
+            return render_template('login.html', error='Invalid Email or Password')
+
     return render_template("login.html")
 
 @app.route("/dashboard")
